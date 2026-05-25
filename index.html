@@ -1185,9 +1185,9 @@ function renderCharts(timeSeries, totalPropias, totalMkt, siteData) {
   const allSites = [...TIENDAS_PROPIAS, ...MARKETPLACES];
   const ctxLine = document.getElementById('chartLine');
 
-  // ── LEFT CHART: Ayer → horizontal bar per site; otherwise time series ──────
+  // ── LEFT CHART: Hoy/Ayer → horizontal bar per site; otherwise time series ──────
   if (ctxLine) {
-    if (currentView === 'ayer') {
+    if (currentView === 'ayer' || currentView === 'dia') {
       // Horizontal bar: one bar per site with data
       const sitesWithData = allSites.filter(s => siteData[s] && siteData[s].amount > 0);
       const labels  = sitesWithData.map(s => s);
