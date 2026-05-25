@@ -1,0 +1,1441 @@
+<!DOCTYPE html><!-- dashboard v20260524-2132 -->
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Ventas E-commerce</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root {
+    --c-bg: #f8f7f4;
+    --c-surface: #ffffff;
+    --c-border: rgba(0,0,0,0.08);
+    --c-border-med: rgba(0,0,0,0.14);
+    --c-text: #1a1a18;
+    --c-muted: #6b6b67;
+    --c-hint: #9b9b96;
+    --c-green: #3B6D11;
+    --c-green-bg: #EAF3DE;
+    --c-blue: #185FA5;
+    --c-blue-bg: #E6F1FB;
+    --c-amber: #854F0B;
+    --c-amber-bg: #FAEEDA;
+    --c-teal: #0F6E56;
+    --c-teal-bg: #E1F5EE;
+    --c-coral: #993C1D;
+    --c-coral-bg: #FAECE7;
+    --c-purple: #534AB7;
+    --c-purple-bg: #EEEDFE;
+    --c-gray-bg: #F1EFE8;
+    --radius: 10px;
+    --radius-sm: 6px;
+    font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--c-bg); color: var(--c-text); min-height: 100vh; }
+
+  /* --- PIN SCREEN --- */
+  #pin-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--c-bg);
+  }
+  .pin-card {
+    background: var(--c-surface);
+    border: 0.5px solid var(--c-border-med);
+    border-radius: var(--radius);
+    padding: 2.5rem 2rem;
+    width: 320px;
+    text-align: center;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+  }
+  .pin-logo {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--c-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  .pin-title { font-size: 20px; font-weight: 500; margin-bottom: 0.3rem; }
+  .pin-sub { font-size: 13px; color: var(--c-muted); margin-bottom: 2rem; }
+  .pin-dots {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-bottom: 1.8rem;
+  }
+  .pin-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1.5px solid var(--c-border-med);
+    background: transparent;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .pin-dot.filled { background: var(--c-text); border-color: var(--c-text); }
+  .pin-dot.error  { background: #E24B4A; border-color: #E24B4A; }
+  .pin-keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 1rem;
+  }
+  .pin-key {
+    background: var(--c-gray-bg);
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    font-size: 18px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.1s, transform 0.08s;
+    color: var(--c-text);
+    font-family: inherit;
+  }
+  .pin-key:hover  { background: #e0ddd5; }
+  .pin-key:active { transform: scale(0.95); }
+  .pin-key.delete { font-size: 14px; color: var(--c-muted); }
+  .pin-input-hidden {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    width: 1px;
+    height: 1px;
+  }
+  .pin-keyboard-hint {
+    font-size: 11px;
+    color: var(--c-hint);
+    margin-bottom: 0.8rem;
+  }
+  .pin-error { font-size: 12px; color: #E24B4A; min-height: 18px; margin-top: 4px; }
+
+  /* --- DASHBOARD --- */
+  #dashboard { display: none; }
+  .top-bar {
+    background: var(--c-surface);
+    border-bottom: 0.5px solid var(--c-border);
+    padding: 0 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .top-bar-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .brand {
+    font-size: 15px;
+    font-weight: 500;
+  }
+  .brand span {
+    color: var(--c-muted);
+    font-weight: 400;
+  }
+  .nav-tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--c-gray-bg);
+    border-radius: var(--radius-sm);
+    padding: 3px;
+  }
+  .nav-tab {
+    padding: 5px 14px;
+    border-radius: 4px;
+    border: none;
+    background: transparent;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--c-muted);
+    transition: background 0.12s, color 0.12s;
+  }
+  .nav-tab.active {
+    background: var(--c-surface);
+    color: var(--c-text);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  .top-bar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .last-update {
+    font-size: 12px;
+    color: var(--c-hint);
+  }
+  .btn-refresh {
+    background: var(--c-gray-bg);
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--c-text);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: background 0.1s;
+  }
+  .btn-refresh:hover { background: #e0ddd5; }
+
+
+  .main { padding: 1.5rem; max-width: 1200px; margin: 0 auto; }
+
+  /* --- METRIC CARDS --- */
+  .metric-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px;
+    margin-bottom: 1.5rem;
+  }
+  .metric-card {
+    background: var(--c-surface);
+    border: 0.5px solid var(--c-border);
+    border-radius: var(--radius);
+    padding: 1rem 1.1rem;
+  }
+  .metric-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--c-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .metric-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+  }
+  .metric-value {
+    font-size: 22px;
+    font-weight: 500;
+    line-height: 1.1;
+  }
+  .metric-sub {
+    font-size: 11px;
+    color: var(--c-hint);
+    margin-top: 3px;
+  }
+
+  /* --- SITE CARDS --- */
+  .section-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--c-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 10px;
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 0.5px;
+    background: var(--c-border-med);
+  }
+  .site-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+    margin-bottom: 1.5rem;
+  }
+  .site-card {
+    background: var(--c-surface);
+    border: 0.5px solid var(--c-border);
+    border-radius: var(--radius);
+    padding: 1rem;
+  }
+  .site-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .site-name {
+    font-size: 13px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .site-badge {
+    font-size: 10px;
+    font-weight: 500;
+    padding: 2px 7px;
+    border-radius: 20px;
+  }
+  .badge-own { background: var(--c-teal-bg); color: var(--c-teal); }
+  .badge-mkt { background: var(--c-amber-bg); color: var(--c-amber); }
+  .site-amount {
+    font-size: 19px;
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+  .site-orders {
+    font-size: 12px;
+    color: var(--c-muted);
+  }
+  .site-bar-wrap {
+    margin-top: 8px;
+    height: 3px;
+    background: var(--c-gray-bg);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .site-bar {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.5s ease;
+  }
+
+  /* --- CHARTS --- */
+  .chart-row {
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    gap: 12px;
+    margin-bottom: 1.5rem;
+  }
+  .chart-card {
+    background: var(--c-surface);
+    border: 0.5px solid var(--c-border);
+    border-radius: var(--radius);
+    padding: 1.2rem;
+  }
+  .chart-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+  .chart-title {
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 11px;
+    color: var(--c-muted);
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+  }
+
+  /* --- TOP PRODUCTS --- */
+  .products-card {
+    background: var(--c-surface);
+    border: 0.5px solid var(--c-border);
+    border-radius: var(--radius);
+    padding: 1.2rem;
+    margin-bottom: 1.5rem;
+  }
+  .product-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 0;
+    border-bottom: 0.5px solid var(--c-border);
+  }
+  .product-row:last-child { border-bottom: none; }
+  .product-rank {
+    font-size: 12px;
+    color: var(--c-hint);
+    width: 18px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .product-name {
+    flex: 1;
+    font-size: 13px;
+    line-height: 1.35;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .product-sku {
+    font-size: 11px;
+    color: var(--c-hint);
+    font-family: 'SF Mono', 'Consolas', monospace;
+  }
+  .product-qty {
+    font-size: 13px;
+    font-weight: 500;
+    width: 50px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .product-amt {
+    font-size: 13px;
+    font-weight: 500;
+    width: 90px;
+    text-align: right;
+    flex-shrink: 0;
+    color: var(--c-muted);
+  }
+  .product-bar-wrap {
+    width: 80px;
+    height: 3px;
+    background: var(--c-gray-bg);
+    border-radius: 2px;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  .product-bar { height: 100%; border-radius: 2px; background: #378ADD; }
+
+  /* --- LOADING / ERROR --- */
+  .loading-state {
+    text-align: center;
+    padding: 3rem;
+    color: var(--c-muted);
+    font-size: 14px;
+  }
+  .spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--c-border-med);
+    border-top-color: var(--c-text);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin-bottom: 10px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .error-banner {
+    background: #FCEBEB;
+    border: 0.5px solid #F09595;
+    color: #A32D2D;
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-size: 13px;
+    margin-bottom: 1rem;
+    display: none;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: var(--c-hint);
+    font-size: 13px;
+  }
+
+  @media (max-width: 700px) {
+    .chart-row { grid-template-columns: 1fr; }
+    .top-bar { flex-wrap: wrap; height: auto; padding: 10px 1rem; gap: 8px; }
+    .nav-tabs { order: 3; width: 100%; }
+    .nav-tab { flex: 1; text-align: center; }
+    .product-amt, .product-bar-wrap { display: none; }
+  }
+
+  /* --- DETALLE TABLE --- */
+  .detalle-card {
+    background: var(--c-surface);
+    border: 0.5px solid var(--c-border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+  }
+  .detalle-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .detalle-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+    white-space: nowrap;
+    table-layout: auto;
+  }
+  .detalle-table thead { position: sticky; top: 0; z-index: 3; }
+  .detalle-table thead tr:first-child { background: var(--c-gray-bg); }
+  .detalle-table thead tr:nth-child(2) { background: #eceae2; }
+  .detalle-table th {
+    padding: 6px 8px;
+    text-align: right;
+    font-weight: 600;
+    font-size: 10px;
+    color: var(--c-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    border-bottom: 0.5px solid var(--c-border-med);
+    position: sticky;
+    top: 0;
+    background: var(--c-gray-bg);
+  }
+  .detalle-table thead tr:nth-child(2) th { background: #eceae2; top: 31px; }
+  .detalle-table th:first-child,
+  .detalle-table th:nth-child(2) { text-align: left; }
+  /* Sticky first 2 columns */
+  .detalle-table th:nth-child(1),
+  .detalle-table td:nth-child(1) {
+    position: sticky; left: 0; z-index: 2;
+    background: var(--c-gray-bg);
+    border-right: 0.5px solid var(--c-border-med);
+    min-width: 46px;
+  }
+  .detalle-table thead th:nth-child(1) { z-index: 4; }
+  .detalle-table td:nth-child(1) { background: var(--c-surface); }
+  .detalle-table tbody tr:hover td:nth-child(1) { background: var(--c-gray-bg); }
+  .detalle-table tfoot td:nth-child(1) { background: var(--c-gray-bg); }
+  .detalle-table td {
+    padding: 7px 8px;
+    text-align: right;
+    border-bottom: 0.5px solid var(--c-border);
+  }
+  .detalle-table td:first-child { text-align: left; font-weight: 600; color: var(--c-muted); font-size: 11px; }
+  .detalle-table tbody tr:last-child td { border-bottom: none; }
+  .detalle-table tbody tr:hover td { background: var(--c-gray-bg); }
+  .detalle-table .col-subtotal {
+    background: rgba(24,95,165,0.06);
+    font-weight: 700;
+    color: #185FA5 !important;
+    border-left: 1.5px solid rgba(24,95,165,0.2);
+  }
+  .detalle-table .col-total {
+    background: rgba(24,95,165,0.12);
+    font-weight: 700;
+    border-left: 1.5px solid rgba(24,95,165,0.3);
+  }
+  .detalle-table tfoot td {
+    background: var(--c-gray-bg);
+    font-weight: 700;
+    border-top: 1.5px solid var(--c-border-med);
+    border-bottom: none;
+    font-size: 11px;
+  }
+  .detalle-table .th-site-name {
+    display: block;
+    font-weight: 700;
+    font-size: 10px;
+    color: var(--c-text);
+    text-transform: uppercase;
+  }
+  .detalle-table .th-site-total {
+    display: block;
+    font-weight: 600;
+    font-size: 10px;
+    color: #185FA5;
+    text-transform: none;
+    letter-spacing: 0;
+    margin-top: 1px;
+  }
+  .detalle-filter {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  .detalle-filter label { font-size: 12px; color: var(--c-muted); font-weight: 500; }
+  .detalle-filter select {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    border: 0.5px solid var(--c-border-med);
+    background: var(--c-surface);
+    color: var(--c-text);
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<!-- ======================== PIN SCREEN ======================== -->
+<div id="pin-screen">
+  <div class="pin-card">
+    <div class="pin-logo">Sportway · E-commerce</div>
+    <div class="pin-title">Ventas Dashboard</div>
+    <div class="pin-sub">Ingresa el código de acceso</div>
+    <input class="pin-input-hidden" id="pin-hidden-input" type="tel" inputmode="numeric" maxlength="4" autocomplete="off">
+    <div class="pin-dots" id="pin-dots">
+      <div class="pin-dot" id="d0"></div>
+      <div class="pin-dot" id="d1"></div>
+      <div class="pin-dot" id="d2"></div>
+      <div class="pin-dot" id="d3"></div>
+    </div>
+    <div class="pin-keyboard-hint">Puedes escribir el código con el teclado</div>
+    <div class="pin-keypad">
+      <button class="pin-key" onclick="pinKey('1')">1</button>
+      <button class="pin-key" onclick="pinKey('2')">2</button>
+      <button class="pin-key" onclick="pinKey('3')">3</button>
+      <button class="pin-key" onclick="pinKey('4')">4</button>
+      <button class="pin-key" onclick="pinKey('5')">5</button>
+      <button class="pin-key" onclick="pinKey('6')">6</button>
+      <button class="pin-key" onclick="pinKey('7')">7</button>
+      <button class="pin-key" onclick="pinKey('8')">8</button>
+      <button class="pin-key" onclick="pinKey('9')">9</button>
+      <button class="pin-key delete" onclick="pinClear()">✕ Borrar</button>
+      <button class="pin-key" onclick="pinKey('0')">0</button>
+      <button class="pin-key delete" onclick="pinBack()">⌫</button>
+    </div>
+    <div class="pin-error" id="pin-error"></div>
+  </div>
+</div>
+
+<!-- ======================== DASHBOARD ======================== -->
+<div id="dashboard">
+  <div class="top-bar">
+    <div class="top-bar-left">
+      <div class="brand">Ventas <span>E-commerce</span></div>
+      <div class="nav-tabs">
+        <button class="nav-tab active" onclick="setView('dia')">Hoy</button>
+        <button class="nav-tab" onclick="setView('ayer')">Ayer</button>
+        <button class="nav-tab" onclick="setView('mes')">Mes</button>
+        <button class="nav-tab" onclick="setView('anio')">Año</button>
+        <button class="nav-tab" onclick="setView('detalle')">Detalle</button>
+      </div>
+    </div>
+    <div class="top-bar-right">
+      <div class="last-update" id="last-update">—</div>
+      <button class="btn-refresh" onclick="loadData()">↻ Actualizar</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="error-banner" id="error-banner"></div>
+
+    <div id="content">
+      <div class="loading-state">
+        <div class="spinner"></div><br>Cargando datos...
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── CONFIG ──────────────────────────────────────────────────────────────────
+const SHEET_ID = '1aDhgUb2_ftx0bGcjAg9qngy2eTNQYr-37y2WN42GBZs';
+const TIENDAS_PROPIAS = ['Sportway', 'Molten', 'Macron', 'Mitre', 'Reusch'];
+const MARKETPLACES    = ['Falabella', 'Paris', 'Ripley', 'Meli', 'Walmart', 'Hites'];
+
+// Colors per site
+const SITE_COLORS = {
+  Sportway:  { color: '#185FA5', bg: '#E6F1FB', bar: '#378ADD' },
+  Macron:    { color: '#534AB7', bg: '#EEEDFE', bar: '#7F77DD' },
+  Molten:    { color: '#3B6D11', bg: '#EAF3DE', bar: '#639922' },
+  Mitre:     { color: '#0F6E56', bg: '#E1F5EE', bar: '#1D9E75' },
+  Reusch:    { color: '#993C1D', bg: '#FAECE7', bar: '#D85A30' },
+  Falabella: { color: '#854F0B', bg: '#FAEEDA', bar: '#EF9F27' },
+  Meli:      { color: '#185FA5', bg: '#E6F1FB', bar: '#378ADD' },
+  Paris:     { color: '#993556', bg: '#FBEAF0', bar: '#D4537E' },
+  Ripley:    { color: '#854F0B', bg: '#FAEEDA', bar: '#BA7517' },
+  Walmart:   { color: '#3B6D11', bg: '#EAF3DE', bar: '#639922' },
+  Hites:     { color: '#0F6E56', bg: '#E1F5EE', bar: '#1D9E75' },
+};
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let currentView = 'dia';
+let allData = [];  // raw rows from all sheets
+let resumenData = []; // rows from Resumen sheet
+let chartInstances = {};
+
+// ─── PIN CONFIG ───────────────────────────────────────────────────────────────
+const PIN = '4967';
+
+// ─── PIN LOGIC ────────────────────────────────────────────────────────────────
+let pinBuffer = '';
+
+function pinKey(k) {
+  if (pinBuffer.length >= 4) return;
+  pinBuffer += k;
+  updateDots();
+  if (pinBuffer.length === 4) checkPin();
+}
+function pinBack() {
+  pinBuffer = pinBuffer.slice(0, -1);
+  updateDots();
+  document.getElementById('pin-error').textContent = '';
+}
+function pinClear() {
+  pinBuffer = '';
+  updateDots();
+  document.getElementById('pin-error').textContent = '';
+}
+function updateDots() {
+  for (let i = 0; i < 4; i++) {
+    const d = document.getElementById('d' + i);
+    d.classList.toggle('filled', i < pinBuffer.length);
+    d.classList.remove('error');
+  }
+  // Sync hidden input for keyboard entry
+  const inp = document.getElementById('pin-hidden-input');
+  if (inp) inp.value = pinBuffer;
+}
+function checkPin() {
+  if (pinBuffer === PIN) {
+    document.getElementById('pin-screen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    loadData();
+  } else {
+    for (let i = 0; i < 4; i++) document.getElementById('d' + i).classList.add('error');
+    document.getElementById('pin-error').textContent = 'Código incorrecto';
+    setTimeout(() => { pinClear(); document.getElementById('pin-error').textContent = ''; }, 1200);
+  }
+}
+
+// Keyboard support
+document.addEventListener('keydown', function(e) {
+  const pinScreen = document.getElementById('pin-screen');
+  if (!pinScreen || pinScreen.style.display === 'none') return;
+  if (e.key >= '0' && e.key <= '9') { pinKey(e.key); }
+  else if (e.key === 'Backspace') { pinBack(); }
+  else if (e.key === 'Delete' || e.key === 'Escape') { pinClear(); }
+  else if (e.key === 'Enter' && pinBuffer.length === 4) { checkPin(); }
+});
+
+// Auto-focus hidden input on mobile for virtual keyboard
+document.addEventListener('DOMContentLoaded', function() {
+  const pinScreen = document.getElementById('pin-screen');
+  if (pinScreen) {
+    pinScreen.addEventListener('click', function() {
+      const inp = document.getElementById('pin-hidden-input');
+      if (inp) inp.focus();
+    });
+    const inp = document.getElementById('pin-hidden-input');
+    if (inp) {
+      inp.addEventListener('input', function() {
+        // Sync from native input (mobile keyboard)
+        const digits = inp.value.replace(/\D/g, '').slice(0, 4);
+        pinBuffer = digits;
+        updateDots();
+        if (pinBuffer.length === 4) { setTimeout(checkPin, 100); }
+      });
+    }
+  }
+});
+
+// ─── DATA LOADING ─────────────────────────────────────────────────────────────
+async function loadData() {
+  document.getElementById('content').innerHTML = '<div class="loading-state"><div class="spinner"></div><br>Cargando datos...</div>';
+  const errorBanner = document.getElementById('error-banner');
+  errorBanner.style.display = 'none';
+
+  const fetchSheet = async (sheetName) => {
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status} al cargar hoja "${sheetName}"`);
+    const text = await res.text();
+    if (text.startsWith('<!')) throw new Error(`Hoja "${sheetName}" no existe o el archivo no es público`);
+    return parseCSV(text);
+  };
+
+  const sheetNames = ['Sportway_Raw', 'Falabella_Raw', 'Meli_Raw', 'Reusch_Raw', 'Mitre_Raw', 'Molten_Raw', 'Macron_Raw', 'Resumen'];
+
+  try {
+    const results = await Promise.allSettled(sheetNames.map(s => fetchSheet(s)));
+
+    const errors = results.map((r,i) => r.status === 'rejected' ? `${sheetNames[i]}: ${r.reason.message}` : null).filter(Boolean);
+    if (errors.length > 0) {
+      errorBanner.style.display = 'block';
+      errorBanner.innerHTML = '⚠ Problemas al cargar: ' + errors.join(' | ');
+    }
+
+    allData = [];
+    results.forEach((r, i) => {
+      if (r.status === 'fulfilled' && sheetNames[i] !== 'Resumen') {
+        const rows = r.value;
+        if (rows.length < 2) return;
+        const header = rows[0];
+        rows.slice(1).forEach(row => {
+          const obj = {};
+          header.forEach((h, j) => obj[h.trim()] = row[j]);
+          if (obj['Fecha Pedido'] && obj['Total Pedido']) allData.push(obj);
+        });
+      } else if (r.status === 'fulfilled' && sheetNames[i] === 'Resumen') {
+        const rows = r.value;
+        if (rows.length < 2) return;
+        const header = rows[0];
+        resumenData = rows.slice(1).map(row => {
+          const obj = {};
+          header.forEach((h, j) => obj[h.trim()] = row[j]);
+          return obj;
+        }).filter(r => r['Fecha'] && r['Total']);
+      }
+    });
+
+    if (allData.length === 0 && resumenData.length === 0) {
+      document.getElementById('content').innerHTML = '<div class="empty-state">Sin datos. Verifica que el Google Sheets esté compartido como público (Cualquiera con el vínculo → Lector).</div>';
+      return;
+    }
+
+    document.getElementById('last-update').textContent = 'Act. ' + new Date().toLocaleTimeString('es-CL', {hour:'2-digit',minute:'2-digit'});
+    renderView();
+  } catch(e) {
+    errorBanner.style.display = 'block';
+    errorBanner.innerHTML = '⚠ Error de conexión: ' + e.message;
+    document.getElementById('content').innerHTML = '<div class="empty-state">No se pudo conectar con Google Sheets.</div>';
+  }
+}
+
+function parseCSV(text) {
+  const rows = [];
+  const lines = text.split('\n');
+  lines.forEach(line => {
+    if (!line.trim()) return;
+    const row = [];
+    let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') { inQ = !inQ; continue; }
+      if (c === ',' && !inQ) { row.push(cur.trim()); cur = ''; continue; }
+      cur += c;
+    }
+    row.push(cur.trim());
+    rows.push(row);
+  });
+  return rows;
+}
+
+// ─── NUMBER PARSING (handles $, commas, dots as thousands sep) ───────────────
+function parseNum(val) {
+  if (!val && val !== 0) return 0;
+  const s = String(val).trim();
+  // Remove currency symbols, spaces
+  const cleaned = s.replace(/[$\s]/g, '');
+  // If commas are thousands separators (e.g. "1,234,567" or "1,234") 
+  // vs decimal separator (e.g. "1.234,56")
+  // Strategy: remove all dots and commas that are thousands seps
+  // Detect: if ends with ,XX (2 digits) treat comma as decimal — unlikely for CLP
+  // For CLP (no decimals), just strip all commas and dots used as thousands
+  const noThousands = cleaned.replace(/[.,]/g, '');
+  const n = parseInt(noThousands, 10);
+  return isNaN(n) ? 0 : n;
+}
+
+// ─── DATE PARSING ─────────────────────────────────────────────────────────────
+function parseDate(val) {
+  if (!val) return null;
+  if (typeof val === 'string') {
+    // ISO format: 2026-05-19T11:12:36.000-04:00
+    if (val.includes('T')) {
+      const d = new Date(val);
+      return isNaN(d) ? null : d;
+    }
+    // Try direct parse
+    const d = new Date(val);
+    if (!isNaN(d)) return d;
+  }
+  // Excel serial number
+  const n = parseFloat(val);
+  if (!isNaN(n)) {
+    const d = new Date((n - 25569) * 86400 * 1000);
+    return d;
+  }
+  return null;
+}
+
+function toDateStr(d) {
+  if (!d) return null;
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+// ─── FILTERING ────────────────────────────────────────────────────────────────
+function getFilteredData() {
+  const now = new Date();
+  const todayStr = toDateStr(now);
+  const curMonth = now.getMonth();
+  const curYear = now.getFullYear();
+
+  return allData.filter(row => {
+    const d = parseDate(row['Fecha Pedido']);
+    if (!d) return false;
+    if (currentView === 'dia') return toDateStr(d) === todayStr;
+    if (currentView === 'ayer' || currentView === 'dia') { const ayer = new Date(now.getTime() - 86400000); return toDateStr(d) === toDateStr(ayer); }
+    if (currentView === 'mes') return d.getMonth() === curMonth && d.getFullYear() === curYear;
+    if (currentView === 'anio') return d.getFullYear() === curYear;
+    return true;
+  });
+}
+
+// ─── AGGREGATION ─────────────────────────────────────────────────────────────
+function aggregateBySite(rows) {
+  const sites = {};
+  rows.forEach(row => {
+    const tienda = (row['Tienda'] || '').trim();
+    if (!tienda) return;
+    const total = parseNum(row['Total Pedido']);
+    const orderId = row['Order ID'];
+    if (!sites[tienda]) sites[tienda] = { amount: 0, orders: new Set() };
+    sites[tienda].amount += total;
+    if (orderId) sites[tienda].orders.add(orderId);
+  });
+  // Convert sets to counts — but since each row is a line item, count unique orders
+  Object.keys(sites).forEach(k => {
+    sites[k].orderCount = sites[k].orders.size || Math.round(sites[k].amount / 35000) || 1;
+  });
+  return sites;
+}
+
+function aggregateProducts(rows) {
+  const prods = {};
+  rows.forEach(row => {
+    const sku = (row['SKU'] || '').trim();
+    const name = (row['Producto'] || '').split(' - ')[0].trim();
+    if (!sku) return;
+    const qty = parseNum(row['Qty']) || 1;
+    const sub = parseNum(row['Subtotal Línea']) || parseNum(row['Total Pedido']) || 0;
+    const key = sku;
+    if (!prods[key]) prods[key] = { sku, name, qty: 0, amount: 0 };
+    prods[key].qty += qty;
+    prods[key].amount += sub;
+  });
+  return Object.values(prods).sort((a,b) => b.qty - a.qty).slice(0, 15);
+}
+
+// ─── RESUMEN DATA AGGREGATION (for period totals) ─────────────────────────────
+function getResumenTotals() {
+  const now = new Date();
+  const todayStr = toDateStr(now);
+  const curMonth = now.getMonth();
+  const curYear = now.getFullYear();
+
+  const sites = [...TIENDAS_PROPIAS, ...MARKETPLACES];
+  const totals = {};
+  sites.forEach(s => totals[s] = 0);
+
+  resumenData.forEach(row => {
+    const fechaVal = row['Fecha'];
+    const d = parseDate(fechaVal);
+    if (!d) return;
+    const dStr = toDateStr(d);
+    let include = false;
+    if (currentView === 'dia') include = dStr === todayStr;
+    else if (currentView === 'ayer') { const ayer = new Date(now.getTime() - 86400000); include = dStr === toDateStr(ayer); }
+    else if (currentView === 'mes') include = d.getMonth() === curMonth && d.getFullYear() === curYear;
+    else if (currentView === 'anio') include = d.getFullYear() === curYear;
+    if (!include) return;
+
+    sites.forEach(s => {
+      // Try exact match first, then case-insensitive
+      let val = row[s];
+      if (val === undefined) {
+        const k = Object.keys(row).find(k => k.trim().toLowerCase() === s.toLowerCase());
+        val = k ? row[k] : 0;
+      }
+      totals[s] += parseNum(val);
+    });
+  });
+  return totals;
+}
+
+function getResumenTimeSeries() {
+  const now = new Date();
+  const curMonth = now.getMonth();
+  const curYear = now.getFullYear();
+
+  let filtered = resumenData;
+  if (currentView === 'mes') {
+    filtered = resumenData.filter(r => {
+      const d = parseDate(r['Fecha']);
+      return d && d.getMonth() === curMonth && d.getFullYear() === curYear;
+    });
+  } else if (currentView === 'anio') {
+    filtered = resumenData.filter(r => {
+      const d = parseDate(r['Fecha']);
+      return d && d.getFullYear() === curYear;
+    });
+  } else if (currentView === 'ayer') {
+    filtered = resumenData.filter(r => {
+      const d = parseDate(r['Fecha']);
+      const ayer = new Date(now.getTime() - 86400000);
+      return d && toDateStr(d) === toDateStr(ayer);
+    });
+  } else {
+    // last 14 days
+    const cutoff = new Date(now.getTime() - 14 * 86400000);
+    filtered = resumenData.filter(r => {
+      const d = parseDate(r['Fecha']);
+      return d && d >= cutoff;
+    });
+  }
+
+  const getCol = (r, ...keywords) => {
+    const keys = Object.keys(r);
+    const k = keys.find(k => keywords.every(kw => k.toLowerCase().includes(kw.toLowerCase())));
+    return k ? parseNum(r[k]) : 0;
+  };
+  const getTotal = r => {
+    // Match exact column 'Total' — not Subtotal Mkt or Subtotal Tiendas
+    const k = Object.keys(r).find(k => k.trim().toLowerCase() === 'total');
+    return k ? parseNum(r[k]) : 0;
+  };
+
+  return filtered.map(r => ({
+    date: parseDate(r['Fecha']),
+    propias: getCol(r, 'subtotal', 'tienda'),
+    mkt: getCol(r, 'subtotal', 'mkt'),
+    total: getTotal(r),
+  })).filter(r => r.date).sort((a,b) => a.date - b.date);
+}
+
+// ─── FORMAT HELPERS ────────────────────────────────────────────────────────────
+function fmtCLP(n) {
+  return '$' + Math.round(n).toLocaleString('es-CL');
+}
+function fmtM(n) {
+  if (n >= 1000000) return '$' + (n/1000000).toFixed(1).replace('.',',') + 'M';
+  if (n >= 1000) return '$' + Math.round(n/1000) + 'K';
+  return '$' + Math.round(n);
+}
+
+// ─── VIEW CONTROLLER ──────────────────────────────────────────────────────────
+function setView(v) {
+  currentView = v;
+  document.querySelectorAll('.nav-tab').forEach((el, i) => {
+    el.classList.toggle('active', ['dia','ayer','mes','anio','detalle'][i] === v);
+  });
+  renderView();
+}
+
+function renderView() {
+  if (currentView === 'detalle') { renderDetalle(); return; }
+  const rows = getFilteredData();
+  const bySite = aggregateBySite(rows);
+  const products = aggregateProducts(rows);
+
+  // Use resumen for site totals when available (more accurate)
+  const resumenTotals = getResumenTotals();
+  const hasResumen = Object.values(resumenTotals).some(v => v > 0);
+
+  // Merge: prefer resumen data for amounts, use raw for orders
+  const siteData = {};
+  const allSites = [...TIENDAS_PROPIAS, ...MARKETPLACES];
+  allSites.forEach(s => {
+    const raw = bySite[s] || { amount: 0, orderCount: 0 };
+    siteData[s] = {
+      amount: hasResumen ? (resumenTotals[s] || raw.amount) : raw.amount,
+      orderCount: raw.orderCount || 0,
+    };
+  });
+
+  const totalPropias = TIENDAS_PROPIAS.reduce((s, k) => s + (siteData[k]?.amount||0), 0);
+  const totalMkt     = MARKETPLACES.reduce((s, k) => s + (siteData[k]?.amount||0), 0);
+  const totalGeneral = totalPropias + totalMkt;
+  const totalPedidos = allSites.reduce((s,k) => s + (siteData[k]?.orderCount||0), 0);
+
+  const viewLabel = { dia:'hoy', ayer:'ayer', mes:'este mes', anio:'este año' }[currentView];
+  const timeSeries = getResumenTimeSeries();
+
+  const maxSite = Math.max(...allSites.map(s => siteData[s]?.amount||0), 1);
+
+  let html = `
+  <div class="metric-grid">
+    <div class="metric-card">
+      <div class="metric-label">Total ventas</div>
+      <div class="metric-value">${fmtM(totalGeneral)}</div>
+      <div class="metric-sub">${viewLabel}</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label"><span class="metric-dot" style="background:var(--c-teal)"></span> Sitios propios</div>
+      <div class="metric-value">${fmtM(totalPropias)}</div>
+      <div class="metric-sub">${totalGeneral > 0 ? Math.round(totalPropias/totalGeneral*100) : 0}% del total</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label"><span class="metric-dot" style="background:var(--c-amber)"></span> Marketplaces</div>
+      <div class="metric-value">${fmtM(totalMkt)}</div>
+      <div class="metric-sub">${totalGeneral > 0 ? Math.round(totalMkt/totalGeneral*100) : 0}% del total</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Pedidos</div>
+      <div class="metric-value">${totalPedidos || '—'}</div>
+      <div class="metric-sub">${viewLabel}</div>
+    </div>
+  </div>`;
+
+  // SITIOS PROPIOS
+  html += `<div class="section-title">Sitios propios</div><div class="site-grid">`;
+  TIENDAS_PROPIAS.forEach(s => {
+    const d = siteData[s];
+    const col = SITE_COLORS[s] || SITE_COLORS['Sportway'];
+    const pct = maxSite > 0 ? Math.round(d.amount/maxSite*100) : 0;
+    html += `
+    <div class="site-card">
+      <div class="site-card-header">
+        <div class="site-name" style="color:${col.color}">${s}</div>
+        <span class="site-badge badge-own">Propio</span>
+      </div>
+      <div class="site-amount">${fmtM(d.amount)}</div>
+      <div class="site-orders">${d.orderCount ? d.orderCount + ' pedidos' : 'Sin pedidos'}</div>
+      <div class="site-bar-wrap"><div class="site-bar" style="width:${pct}%;background:${col.bar}"></div></div>
+    </div>`;
+  });
+  html += `</div>`;
+
+  // MARKETPLACES
+  html += `<div class="section-title">Marketplaces</div><div class="site-grid">`;
+  MARKETPLACES.forEach(s => {
+    const d = siteData[s];
+    const col = SITE_COLORS[s] || { color: '#6b6b67', bg: '#F1EFE8', bar: '#888780' };
+    const pct = maxSite > 0 ? Math.round(d.amount/maxSite*100) : 0;
+    html += `
+    <div class="site-card">
+      <div class="site-card-header">
+        <div class="site-name" style="color:${col.color}">${s}</div>
+        <span class="site-badge badge-mkt">Marketplace</span>
+      </div>
+      <div class="site-amount">${fmtM(d.amount)}</div>
+      <div class="site-orders">${d.orderCount ? d.orderCount + ' pedidos' : 'Sin pedidos'}</div>
+      <div class="site-bar-wrap"><div class="site-bar" style="width:${pct}%;background:${col.bar}"></div></div>
+    </div>`;
+  });
+  html += `</div>`;
+
+  // CHARTS
+  const isAyer = currentView === 'ayer' || currentView === 'dia';
+  const chartLabel = currentView === 'mes' ? 'Días del mes' : 'Meses del año';
+  const leftChartTitle = currentView === 'ayer' ? 'Desglose por sitio · Ayer' : currentView === 'dia' ? 'Desglose por sitio · Hoy' : 'Evolución de ventas · ' + chartLabel;
+  html += `
+  <div class="chart-row">
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title">${leftChartTitle}</div>
+        <div class="chart-legend" id="chart-legend-row"></div>
+      </div>
+      <div style="position:relative;height:220px"><canvas id="chartLine" role="img" aria-label="Evolución de ventas"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title">Distribución por sitio</div>
+      </div>
+      <div style="position:relative;height:180px;display:flex;align-items:center;justify-content:center">
+        <canvas id="chartDona" role="img" aria-label="Distribución por sitio"></canvas>
+      </div>
+      <div id="dona-legend" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px 10px;font-size:10.5px;color:var(--c-muted)"></div>
+    </div>
+  </div>`;
+
+  // TOP PRODUCTS
+  html += `
+  <div class="section-title">Productos más vendidos</div>
+  <div class="products-card">
+    <div style="display:flex;gap:12px;padding:0 0 8px;border-bottom:0.5px solid var(--c-border);font-size:11px;font-weight:500;color:var(--c-hint);text-transform:uppercase;letter-spacing:0.04em">
+      <span style="width:18px">#</span>
+      <span style="flex:1">Producto</span>
+      <span style="width:50px;text-align:right">Qty</span>
+      <span style="width:90px;text-align:right">Ventas</span>
+      <span style="width:80px"></span>
+    </div>`;
+
+  if (products.length === 0) {
+    html += `<div class="empty-state">Sin datos de productos para este período</div>`;
+  } else {
+    const maxQty = products[0].qty || 1;
+    products.slice(0, 12).forEach((p, i) => {
+      const pct = Math.round(p.qty/maxQty*100);
+      const shortName = p.name.length > 55 ? p.name.slice(0,55)+'…' : p.name;
+      html += `
+      <div class="product-row">
+        <div class="product-rank">${i+1}</div>
+        <div style="flex:1;min-width:0">
+          <div class="product-name" title="${p.name}">${shortName}</div>
+          <div class="product-sku">${p.sku}</div>
+        </div>
+        <div class="product-qty">${Math.round(p.qty)}</div>
+        <div class="product-amt">${fmtM(p.amount)}</div>
+        <div class="product-bar-wrap"><div class="product-bar" style="width:${pct}%"></div></div>
+      </div>`;
+    });
+  }
+  html += `</div>`;
+
+  document.getElementById('content').innerHTML = html;
+
+  // Populate the time-series chart legend (not shown for ayer)
+  const legendRow = document.getElementById('chart-legend-row');
+  if (legendRow) {
+    if (currentView === 'ayer' || currentView === 'dia') {
+      legendRow.style.display = 'none';
+    } else {
+      legendRow.innerHTML = '<span class="legend-item"><span class="legend-dot" style="background:#185FA5"></span>Sitios propios</span>'
+        + '<span class="legend-item"><span class="legend-dot" style="background:#EF9F27"></span>Marketplaces</span>';
+    }
+  }
+
+  // Render charts
+  renderCharts(timeSeries, totalPropias, totalMkt, siteData);
+}
+
+// ─── CHART RENDERING ──────────────────────────────────────────────────────────
+function renderCharts(timeSeries, totalPropias, totalMkt, siteData) {
+  Object.values(chartInstances).forEach(c => c.destroy());
+  chartInstances = {};
+
+  const allSites = [...TIENDAS_PROPIAS, ...MARKETPLACES];
+  const ctxLine = document.getElementById('chartLine');
+
+  // ── LEFT CHART: Ayer → horizontal bar per site; otherwise time series ──────
+  if (ctxLine) {
+    if (currentView === 'ayer') {
+      // Horizontal bar: one bar per site with data
+      const sitesWithData = allSites.filter(s => siteData[s] && siteData[s].amount > 0);
+      const labels  = sitesWithData.map(s => s);
+      const values  = sitesWithData.map(s => siteData[s].amount);
+      const colors  = sitesWithData.map(s => (SITE_COLORS[s] || {bar:'#888780'}).bar);
+
+      chartInstances.line = new Chart(ctxLine, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{ data: values, backgroundColor: colors, borderRadius: 4, borderSkipped: false }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: ctx => ' ' + fmtCLP(ctx.raw) } }
+          },
+          scales: {
+            x: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { font: { size: 10 }, color: '#9b9b96', callback: v => fmtM(v) }, border: { display: false } },
+            y: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#333' } }
+          }
+        }
+      });
+    } else {
+      // Time series stacked bar
+      let labels, propias, mkts;
+      if (currentView === 'anio') {
+        const months = {};
+        timeSeries.forEach(r => {
+          const key = r.date.getFullYear() + '-' + String(r.date.getMonth()+1).padStart(2,'0');
+          if (!months[key]) months[key] = { p: 0, m: 0 };
+          months[key].p += r.propias;
+          months[key].m += r.mkt;
+        });
+        const monthNames = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+        labels  = Object.keys(months).map(k => monthNames[parseInt(k.split('-')[1])-1]);
+        propias = Object.values(months).map(v => v.p);
+        mkts    = Object.values(months).map(v => v.m);
+      } else {
+        labels  = timeSeries.map(r => r.date.getDate() + '/' + (r.date.getMonth()+1));
+        propias = timeSeries.map(r => r.propias);
+        mkts    = timeSeries.map(r => r.mkt);
+      }
+      chartInstances.line = new Chart(ctxLine, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            { label: 'Sitios propios', data: propias, backgroundColor: '#185FA5', borderRadius: 4, borderSkipped: false },
+            { label: 'Marketplaces',   data: mkts,    backgroundColor: '#EF9F27', borderRadius: 4, borderSkipped: false },
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ' ' + fmtM(ctx.raw) } } },
+          scales: {
+            x: { stacked: true, grid: { display: false }, ticks: { font: { size: 11 }, color: '#9b9b96', maxRotation: 0, autoSkip: true, maxTicksLimit: 12 } },
+            y: { stacked: true, grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { font: { size: 11 }, color: '#9b9b96', callback: v => fmtM(v) }, border: { display: false } }
+          }
+        }
+      });
+    }
+  }
+
+  // ── DONUT: Distribution by site (all sites with amount > 0) ──────────────
+  const ctxDona = document.getElementById('chartDona');
+  if (ctxDona) {
+    const sitesWithData = allSites.filter(s => siteData[s] && siteData[s].amount > 0);
+    const donaLabels  = sitesWithData.map(s => s);
+    const donaValues  = sitesWithData.map(s => siteData[s].amount);
+    const donaColors  = sitesWithData.map(s => (SITE_COLORS[s] || {bar:'#888780'}).bar);
+    const totalAll    = donaValues.reduce((a,b) => a+b, 0);
+
+    chartInstances.dona = new Chart(ctxDona, {
+      type: 'doughnut',
+      data: {
+        labels: donaLabels,
+        datasets: [{ data: donaValues, backgroundColor: donaColors, borderWidth: 1, borderColor: '#fff', hoverOffset: 6 }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '60%',
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: {
+            label: ctx => ' ' + ctx.label + ': ' + fmtM(ctx.raw) + ' (' + Math.round(ctx.raw/totalAll*100) + '%)'
+          }}
+        }
+      }
+    });
+
+    // Custom legend below chart
+    const legendEl = document.getElementById('dona-legend');
+    if (legendEl) {
+      legendEl.innerHTML = donaLabels.map((s, i) => {
+        const pct = totalAll > 0 ? Math.round(donaValues[i]/totalAll*100) : 0;
+        return '<span style="display:flex;align-items:center;gap:3px;white-space:nowrap">'
+          + '<span style="width:8px;height:8px;border-radius:2px;background:' + donaColors[i] + ';flex-shrink:0"></span>'
+          + '<span>' + s + ' ' + pct + '%</span>'
+          + '</span>';
+      }).join('');
+    }
+  }
+}
+
+// ─── DETALLE VIEW ─────────────────────────────────────────────────────────────
+function renderDetalle() {
+  Object.values(chartInstances).forEach(c => c.destroy());
+  chartInstances = {};
+
+  if (resumenData.length === 0) {
+    document.getElementById('content').innerHTML = '<div class="empty-state">Sin datos en la hoja Resumen.</div>';
+    return;
+  }
+
+  const sorted = [...resumenData].sort((a, b) => {
+    const da = parseDate(a['Fecha']), db = parseDate(b['Fecha']);
+    return (db || 0) - (da || 0);
+  });
+
+  const mktCols  = ['Falabella','Paris','Ripley','Meli','Walmart','Hites'];
+  const tienCols = ['Sportway','Molten','Macron','Mitre','Reusch'];
+  const allCols  = [...mktCols, ...tienCols, 'Subtotal Mkt', 'Subtotal Tiendas', 'Total'];
+
+  // Build month options
+  const months = {};
+  sorted.forEach(r => {
+    const d = parseDate(r['Fecha']);
+    if (!d) return;
+    const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+    const label = d.toLocaleDateString('es-CL', { month: 'long', year: 'numeric' });
+    months[key] = label.charAt(0).toUpperCase() + label.slice(1);
+  });
+
+  const selId = 'detalle-month-sel';
+  const existing = document.getElementById(selId);
+  // Default to current month
+  const now = new Date();
+  const curMonthKey = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+  const selVal = existing ? existing.value : (months[curMonthKey] ? curMonthKey : 'all');
+
+  const filtered = selVal === 'all' ? sorted : sorted.filter(r => {
+    const d = parseDate(r['Fecha']);
+    if (!d) return false;
+    const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+    return key === selVal;
+  });
+
+  const getVal = (r, col) => {
+    const k = Object.keys(r).find(k => k.trim() === col);
+    return k ? parseNum(r[k]) : 0;
+  };
+
+  // Column totals
+  const totRow = {};
+  allCols.forEach(c => { totRow[c] = 0; });
+  filtered.forEach(r => allCols.forEach(c => { totRow[c] += getVal(r, c); }));
+
+  const fmtCell = n => n === 0
+    ? '<span style="color:var(--c-hint)">—</span>'
+    : fmtCLP(n);
+
+  const fmtSmall = n => {
+    if (n === 0) return '';
+    if (n >= 1000000) return '$' + (n/1000000).toFixed(1).replace('.',',') + 'M';
+    if (n >= 1000) return '$' + Math.round(n/1000) + 'K';
+    return '$' + n;
+  };
+
+  // Month select
+  let monthOpts = '<option value="all">Todos los meses</option>';
+  Object.entries(months).sort((a,b) => b[0].localeCompare(a[0])).forEach(([k,v]) => {
+    monthOpts += '<option value="' + k + '" ' + (k === selVal ? 'selected' : '') + '>' + v + '</option>';
+  });
+
+  // Two header rows: row1 = labels, row2 = period totals under each site
+  const thSite = col => {
+    const tot = totRow[col];
+    return '<th><span class="th-site-name">' + col + '</span>'
+      + (tot > 0 ? '<span class="th-site-total">' + fmtSmall(tot) + '</span>' : '')
+      + '</th>';
+  };
+  const thSubtotal = (label, col) =>
+    '<th class="col-subtotal"><span class="th-site-name">' + label + '</span>'
+    + '<span class="th-site-total">' + fmtSmall(totRow[col]) + '</span></th>';
+
+  const thead = '<thead><tr>'
+    + '<th>Fecha</th>'
+    + mktCols.map(c => thSite(c)).join('')
+    + thSubtotal('Sub Mkt', 'Subtotal Mkt')
+    + tienCols.map(c => thSite(c)).join('')
+    + thSubtotal('Sub Tiendas', 'Subtotal Tiendas')
+    + '<th class="col-total"><span class="th-site-name">Total</span><span class="th-site-total">' + fmtSmall(totRow['Total'] || totRow['Subtotal Mkt'] + totRow['Subtotal Tiendas']) + '</span></th>'
+    + '</tr></thead>';
+
+  // Data rows
+  let rows_html = '';
+  filtered.forEach(r => {
+    const d = parseDate(r['Fecha']);
+    const dia = r['Dia'] || r['Día'] || '';
+    const fechaStr = d ? (d.toLocaleDateString('es-CL', {day:'2-digit', month:'2-digit'}) + ' ' + dia.slice(0,3)) : '—';
+    const subMkt  = getVal(r, 'Subtotal Mkt');
+    const subTien = getVal(r, 'Subtotal Tiendas');
+    const total   = getVal(r, 'Total') || subMkt + subTien;
+
+    rows_html += '<tr>'
+      + '<td>' + fechaStr + '</td>'
+      + mktCols.map(c => '<td>' + fmtCell(getVal(r,c)) + '</td>').join('')
+      + '<td class="col-subtotal">' + fmtCell(subMkt) + '</td>'
+      + tienCols.map(c => '<td>' + fmtCell(getVal(r,c)) + '</td>').join('')
+      + '<td class="col-subtotal">' + fmtCell(subTien) + '</td>'
+      + '<td class="col-total">' + fmtCell(total) + '</td>'
+      + '</tr>';
+  });
+
+  // Footer
+  const footTotal = totRow['Total'] || totRow['Subtotal Mkt'] + totRow['Subtotal Tiendas'];
+  const foot_html = '<tr>'
+    + '<td>TOTAL</td>'
+    + mktCols.map(c => '<td>' + fmtCLP(totRow[c]) + '</td>').join('')
+    + '<td class="col-subtotal">' + fmtCLP(totRow['Subtotal Mkt']) + '</td>'
+    + tienCols.map(c => '<td>' + fmtCLP(totRow[c]) + '</td>').join('')
+    + '<td class="col-subtotal">' + fmtCLP(totRow['Subtotal Tiendas']) + '</td>'
+    + '<td class="col-total">' + fmtCLP(footTotal) + '</td>'
+    + '</tr>';
+
+  const html = '<div class="detalle-filter">'
+    + '<label>Mes:</label>'
+    + '<select id="' + selId + '">' + monthOpts + '</select>'
+    + '<span style="font-size:12px;color:var(--c-hint)">' + filtered.length + ' días</span>'
+    + '</div>'
+    + '<div class="detalle-card"><div class="detalle-scroll">'
+    + '<table class="detalle-table">'
+    + thead
+    + '<tbody>' + rows_html + '</tbody>'
+    + '<tfoot>' + foot_html + '</tfoot>'
+    + '</table></div></div>';
+
+  document.getElementById('content').innerHTML = html;
+  document.getElementById(selId).onchange = renderDetalle;
+}
+
+window.addEventListener('load', loadData);
+</script>
+</body>
+</html>
